@@ -315,10 +315,7 @@ eval(['save(''',file(1:end-4),'.mat'',',save_list(1:end-1),');']);
 fclose(fid);
 
 % Clean the file
-fprintf('\nCleaning file...\n');
 clean_PX4_file([file(1:end-4),'.mat']);
-fprintf('Done!\n\n');
-
 
 % Finished!
 fprintf('Finished Import!\n');

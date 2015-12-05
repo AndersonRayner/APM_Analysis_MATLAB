@@ -14,20 +14,18 @@ if ~nargin
     
 end
 
+fprintf('Cleaning %s\n',PX4_file);
 load(PX4_file);
 
 list_of_variables = who;
 list_of_variables = list_of_variables(~strcmp(list_of_variables,'PX4_file')); % Remove PX4_file out of the list
 
-%% Remove ID, size and format fields
+%% Remove LineNo, ID, size and format fields
 for ii = 1:length(list_of_variables)
-    try
-        eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''ID'');']);
-        eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''size'');']);
-        eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''format'');']);
-    catch
-        fprintf('ID, size and format fields already removed from %s\n',list_of_variables{ii});
-    end
+    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''ID'');']); end
+    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''size'');']); end
+    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''format'');']); end
+    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''LineNo'');']); end   
 end
 
 %% Create a time vector in seconds
@@ -66,5 +64,5 @@ end
 % which is in local time
 
 eval(['save(''',PX4_file,''',',save_list(1:end-1),');']);
-
+fprintf('Done!\n')
 return

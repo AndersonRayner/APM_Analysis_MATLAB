@@ -23,6 +23,7 @@ file = './data/6.mat';
 % file = './data/lost_wing_flight.mat';
 % file = './data/marulan_quad_flight.mat';
 % file = './data/write_off_flight.mat';
+file = './data/3dr_aero.bin-315526-new.mat';
 
 % Need to convert GPS into an X,Y,Z for the playback later on
 
@@ -42,7 +43,7 @@ plot_ARSP = 1;
 plot_ATT  = 1;
 plot_BARO = 0;
 plot_CTUN = 0;
-plot_CURR = 0;
+plot_CURR = 1;
 plot_EKF1 = 0;
 plot_EKF2 = 0;
 plot_EKF3 = 0;
@@ -417,6 +418,18 @@ end
 % GPS time and not the time from the HAL.  This causes some things to
 % mis-align.
 if exist('GPS','var') && (plot_all || plot_GPS);
+    % Imports from MissionPlanner .mat files automatically fix the GPS
+    % latitude and longitude.  Need to undo this.
+    
+    if (abs(max(GPS.Lng))+abs(max(GPS.Lat)))>2
+        fprintf('File probably an import from MissionPlanner or no GPS data.  Fixing...\n');
+        fprintf('Please note, messages will not show up correctly either\n');
+        GPS.Lat = GPS.Lat*1e7;
+        GPS.Lng = GPS.Lng*1e7;
+        fprintf('\n');
+    end
+    
+    % Make the plots
     freq = calc_data_frequency(GPS.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['GPS Data - ',num2str(freq,'%.0f'),' Hz']);
     subplot(4,2,2); hold all; plot(GPS.t,GPS.NSats); ylabel('Satellites');
@@ -527,7 +540,8 @@ if exist('MSG','var');
     fprintf('== MESSAGES ==\n');
     for ii = 1:length(MSG.Message)
         try fprintf('%6.2f s - ',MSG.t(ii)); end; % Older log types don't have a time stamp for MSG
-        fprintf('%s\n',MSG.Message{ii});
+        try fprintf('%s\n',MSG.Message{ii}); ...
+        catch; fprintf('%f\n',MSG.Message(ii)); end; % Prints a zero when the file has no data (such as coming from a MissionPlanner .mat import)
     end
     fprintf('\n');
     

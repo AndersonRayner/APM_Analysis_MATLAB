@@ -7,7 +7,12 @@ Matt Anderson 2015
 
 =======
 Usage
-- Use convert_bin_to_mat_APM.m to convert the .bin file from the APM/Pixhawk into a .mat file.  This will automatically clean the data up using clean_PX4_file as well.  Warning as the importing process is a bit slow.
+- Use << convert_bin_to_mat_APM(file) >> to convert the .bin file from the APM/Pixhawk into a .mat file.  This will automatically clean the data up using clean_PX4_file as well.  Warning as the importing process is a bit slow.
+- Plot the data using plot_PX4_file
+
+If you really want the data and cannot wait for the conversion, this is much faster
+- Convert the .bin to a MATLAB file using MissionPlanner.  Flight Data > DataFlash Logs > Create Matlab File
+- Convert the resulting .mat file using convert_MP_mat(file).  A new .mat file will be created with -new added.
 - Plot the data using plot_PX4_file
 
 ======
