@@ -7,3 +7,6 @@ no_sync/*
 
 # data can be personal, best not to sync it
 data/*
+
+# other stuff
+*.asv
