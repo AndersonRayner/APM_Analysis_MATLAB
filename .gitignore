@@ -1,0 +1,9 @@
+# osx noise
+.DS_Store
+profile
+
+# stuff I don't want to sync
+no_sync/*
+
+# data can be personal, best not to sync it
+data/*
