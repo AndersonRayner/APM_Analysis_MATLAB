@@ -7,7 +7,7 @@ if ~nargin
     clear all
     clc
     
-    PX4_file = 'write_off_flight.mat';
+    PX4_file = './../data/27.mat';
     clean_PX4_file(PX4_file);
     
     return
@@ -25,6 +25,8 @@ for ii = 1:length(list_of_variables)
         eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''ID'');']);
         eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''size'');']);
         eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''format'');']);
+    catch
+        fprintf('ID, size and format fields already removed from %s\n',list_of_variables{ii});
     end
 end
 
@@ -40,6 +42,9 @@ for ii = 1:length(list_of_variables)
     eval(['if isfield(',list_of_variables{ii},',''Lng''); ',list_of_variables{ii},'.Lng(',list_of_variables{ii},'.Lng == 0) = nan; end;']);
 end
 
+%% Remove high (>5) HDOP Lat and Lng fields (set to NaN)
+% undecided if a good idea
+
 %% Save the file
 % Save data
 save_list = [];
@@ -47,9 +52,18 @@ for ii = 1:length(list_of_variables)
     save_list = [save_list,'''',list_of_variables{ii},''','];
 end
 
-keyboard
+% WORK IN PROGRESS
 % Save the file as the time and date of the first GPS signal if possible,
 % otherwise save as original name.
+%     GPS.GMS - Milliseconds since start of GPS week (00:00 Sunday)
+%     GPS.GWk - Full GPS weeks since epoch (January 6, 1980)
+
+% Aiming for about 16/11/2015, around 4 pm perhaps (0500 GMT) using
+%    GPS.GMS = 115450400;
+%    GPS.GWk = 1871;
+
+% Then how do you get it local time? Could try something like datestr(now)
+% which is in local time
 
 eval(['save(''',PX4_file,''',',save_list(1:end-1),');']);
 

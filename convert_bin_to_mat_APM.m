@@ -12,8 +12,8 @@ if ~nargin
     clc
     
 %     file = './data/1.BIN'; convert_bin_to_mat_APM(file);
-    file = './data/2.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/3dr_aero.bin'; convert_bin_to_mat_APM(file);
+%     file = './data/2.BIN'; convert_bin_to_mat_APM(file);
+    file = './data/3dr_aero.bin'; convert_bin_to_mat_APM(file);
 %     file = './data/4.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/5.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/6.BIN'; convert_bin_to_mat_APM(file);
@@ -313,8 +313,15 @@ end
 eval(['save(''',file(1:end-4),'.mat'',',save_list(1:end-1),');']);
 
 fclose(fid);
+
+% Clean the file
+fprintf('\nCleaning file...\n');
+clean_PX4_file([file(1:end-4),'.mat']);
+fprintf('Done!\n\n');
+
+
 % Finished!
-fprintf('I''m done!\n');
+fprintf('Finished Import!\n');
 toc
 
 return

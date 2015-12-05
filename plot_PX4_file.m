@@ -1,4 +1,7 @@
 % function plot_PX4_file(file)
+%
+% Works from about APM:Plane V3.1.1 and APM:Copter V3.2
+%
 % Fields can be retrieved from DataFlash.h.  Search for log_XXX
 close all
 clear all
@@ -6,35 +9,37 @@ clc
 
 addpath('./functions/');
 
-% file = '1.mat';
-% file = '2.mat';
-% file = '3dr_aero.mat';
-% file = '4.mat';
-% file = '5.mat';
-% file = '6.mat';
-% file = '7.mat';
-% file = '8.mat';
-% file = '27.mat';
-% file = 'airspeed_test.mat';
-% file = 'bwb_flight.mat';
-% file = 'lost_wing_flight.mat';
-% file = 'marulan_quad_flight.mat';
-file = 'write_off_flight.mat';
+% file = './data/1.mat';
+% file = './data/2.mat';
+% file = './data/3dr_aero.mat';
+% file = './data/4.mat';
+% file = './data/5.mat';
+file = './data/6.mat';
+% file = './data/7.mat';
+% file = './data/8.mat';
+% file = './data/27.mat';
+% file = './data/airspeed_test.mat';
+% file = './data/bwb_flight.mat';
+% file = './data/lost_wing_flight.mat';
+% file = './data/marulan_quad_flight.mat';
+% file = './data/write_off_flight.mat';
 
 % Need to convert GPS into an X,Y,Z for the playback later on
 
 load(file)
 
 %% Settings
-% xlims = [200 640]; % Sets the time limits.  Setting to 0 or commenting disables the feature
+% xlims = [200 640]; % Sets the axis limits when the x-axis is time. Setting to 0 or commenting disables the feature.
 plot_all = 0;
 grid_on = 1;
+% plot_locs_at_time = [ 942 984 1125 1274 ]; % Plots a marker on the GPS plot at the listed times.  Commenting disables the feature.
+
 
 
 %% Turn individual plots on or off
 plot_AHR2 = 0;
-plot_ARSP = 0;
-plot_ATT  = 0;
+plot_ARSP = 1;
+plot_ATT  = 1;
 plot_BARO = 0;
 plot_CTUN = 0;
 plot_CURR = 0;
@@ -52,10 +57,19 @@ plot_NTUN = 0;
 plot_PM   = 0;
 plot_POS  = 0;
 plot_POWR = 0;
-plot_RAD  = 0;
+plot_RAD  = 1;
+plot_RATE = 0;
 plot_RCIN = 0;
 plot_RCOU = 0;
-plot_VIBE = 0;
+plot_VIBE = 1;
+% Comparison plots
+plot_ALT   = 1;
+plot_ROLL  = 1;
+plot_PITCH = 1;
+plot_YAW   = 1;
+plot_ACC   = 1;
+plot_RATES = 1;
+plot_MAGS  = 1;
 
 %% ==== RAW DATA
 %% AHR2 - DCM Attitude Estimate
@@ -107,7 +121,7 @@ if exist('BARO','var') && (plot_all || plot_BARO);
     subplot(3,1,3); hold all; plot(BARO.t,BARO.Temp); ylabel('Temperature [ C ]'); xlabel('Time [ s ]');
 end
 %% CMD  - TO DO
-%% CTUN -
+%% CTUN - Command Tuning
 if exist('CTUN','var') && (plot_all || plot_CTUN);
     freq = calc_data_frequency(CTUN.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['CTUN Data - ',num2str(freq,'%.0f'),' Hz']);
@@ -179,7 +193,7 @@ if exist('DU32','var')
     end
     
 end
-%% EKF1 -
+%% EKF1 - EKF Estimated States
 if exist('EKF1','var') && (plot_all || plot_EKF1);
     freq = calc_data_frequency(EKF1.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Attitude - ',num2str(freq,'%.0f'),' Hz']);
@@ -215,7 +229,7 @@ end
 if exist('EKF2','var') && (plot_all || plot_EKF2)
     freq = calc_data_frequency(EKF2.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Bias - ',num2str(freq,'%.0f'),' Hz']);
-    plot(EKF2.t,EKF2.AZ1bias); plot(EKF2.t,EKF2.AZ2bias); legend('AZ1','AZ2');
+    try plot(EKF2.t,EKF2.AZ1bias); plot(EKF2.t,EKF2.AZ2bias); legend('AZ1','AZ2'); end % Fails on older logs
     
     figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Wind Estimate - ',num2str(freq,'%.0f'),' Hz']);
     plot(EKF2.t,EKF2.VWN); plot(EKF2.t,EKF2.VWE);
@@ -260,8 +274,8 @@ if exist('EKF4','var') && (plot_all || plot_EKF4);
     catch;subplot(4,2,5); hold all; plot(EKF4.t,EKF4.OFN); plot(EKF4.t,EKF4.EFE); legend('offsetNorth','offsetEast','location','northWest'); end
     subplot(4,2,7); hold all; plot(EKF4.t,EKF4.SVT); legend('sqrtvarVT','location','northWest');
     subplot(4,2,4); hold all; plot(EKF4.t,EKF4.FS); legend('faults','location','northWest');
-    subplot(4,2,6); hold all; plot(EKF4.t,EKF4.TS); legend('timeouts','location','northWest');
-    subplot(4,2,8); hold all; plot(EKF4.t,EKF4.SS); legend('solution','location','northWest');
+    try subplot(4,2,6); hold all; plot(EKF4.t,EKF4.TS); legend('timeouts','location','northWest'); end; % Fails on older logs
+    try subplot(4,2,8); hold all; plot(EKF4.t,EKF4.SS); legend('solution','location','northWest'); end; % Fails on older logs
     %   uint64_t time_us;   TimeUS
     %     int16_t sqrtvarV; SV
     %     int16_t sqrtvarP; SP
@@ -399,6 +413,9 @@ if exist('GPA','var') && (plot_all || plot_GPA);
     subplot(2,2,4); hold all; plot(GPA.t,GPA.SAcc/100); ylabel('Speed Accuracy [ ? ]');
 end
 %% GPS  - GPS Data
+% The GPS data is a bit weird in earlier versions of the logs as it uses
+% GPS time and not the time from the HAL.  This causes some things to
+% mis-align.
 if exist('GPS','var') && (plot_all || plot_GPS);
     freq = calc_data_frequency(GPS.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['GPS Data - ',num2str(freq,'%.0f'),' Hz']);
@@ -421,6 +438,17 @@ if exist('GPS','var') && (plot_all || plot_GPS);
     % GCrs - Ground course heading [ centi-degrees ]
     % VZ - Velocity in Z
     % U - Used as primary sensor
+    
+    % Add markers at time << plot_locs_at_time >>
+    if exist('plot_locs_at_time','var')
+        subplot(1,2,1);
+        for ii = 1:length(plot_locs_at_time)
+            lon = interp1(GPS.t,GPS.Lng,plot_locs_at_time(ii));
+            lat = interp1(GPS.t,GPS.Lat,plot_locs_at_time(ii));
+            plot(lon/1e7,lat/1e7,'wo','lineWidth',4);
+            plot(lon/1e7,lat/1e7,'bo','lineWidth',2);
+        end
+    end
 end
 %% IMU  - Inertial Data (IMU1)
 if exist('IMU','var') && (plot_all || plot_IMU);
@@ -553,6 +581,7 @@ end
 % PIDs for yaw
 %% PM   - Performance Monitoring
 if exist('PM','var') && (plot_all || plot_PM);
+    if isfield(PM,'t'); % older logs don't log the time data here
     freq = calc_data_frequency(PM.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['PM Data - ',num2str(freq,'%.1f'),' Hz']);
     subplot(3,2,1); hold all; plot(PM.t,PM.NLon); ylabel('Long Loops [ - ]');
@@ -561,6 +590,7 @@ if exist('PM','var') && (plot_all || plot_PM);
     subplot(3,2,4); hold all; plot(PM.t,PM.PMT); ylabel('PMT [ ? ]');
     subplot(3,2,5); hold all; plot(PM.t,PM.I2CErr); ylabel('I2C Errors [ - ]');
     subplot(3,2,6); hold all; plot(PM.t,PM.INSErr); ylabel('INS Errors [ - ]');
+    end
 end
 %% POS  - Needs work
 if exist('POS','var') && (plot_all || plot_POS);
@@ -590,6 +620,8 @@ if exist('RAD','var') && (plot_all || plot_RAD);
     subplot(3,1,3); hold all; plot(RAD.t,RAD.RxErrors); plot(RAD.t,RAD.Fixed);  ylabel('Errors'); xlabel('Time [ s ]'); legend('RxErrors','Fixed');
 end
 %% RATE - Needs work
+if exist('RATE','var') && (plot_all || plot_RATE);
+end
 %% RCIN - RC In
 if exist('RCIN','var') && (plot_all || plot_RCIN);
     freq = calc_data_frequency(RCIN.t);
@@ -608,7 +640,7 @@ end
 %% UBX1 - Needs work
 %% UBX2 - Needs work
 %% UBX3 - Needs work
-%% VIBE Plot
+%% VIBE - Virbation Data
 % See http://copter.ardupilot.com/wiki/common-measuring-vibration/
 if exist('VIBE','var') && (plot_all || plot_VIBE);
     freq = calc_data_frequency(VIBE.t);
@@ -626,61 +658,118 @@ if exist('VIBE','var') && (plot_all || plot_VIBE);
     
 end
 
-%% ==== Comparisons
-%% Altitude
-figure(100); clf; hold all; set(gcf,'name','Altitude Estimates Comparison');
+
+%% ==== Comparison plots
+%% Altitude 
+if (plot_all || plot_ALT);
+figure(100); clf; hold all; set(gcf,'name','Altitude Comparison');
+% Plot input data
+subplot(2,1,1); hold all;
 try plot(BARO.t,BARO.Alt, 'DisplayName','BARO'); end
 try plot(GPS.t,GPS.RAlt, 'DisplayName','GPS'); end
 try plot(EKF1.t,-EKF1.PD, 'DisplayName','EKF'); end
+try plot(CTUN.t,CTUN.SAlt, 'DisplayName','SAlt'); end % Sonar altitude
 try plot(CTUN.t,CTUN.Alt,':', 'DisplayName','Estimated'); end
-% plot(CTUN.t,CTUN.SAlt); % can add this later if I ever use one
 xlabel('Time [ s ]'); ylabel('Altitude [ m ]');
 legend('-DynamicLegend');
-%% Roll
-figure(gcf+1); clf; hold all; set(gcf,'name','Roll Estimates Comparison');
+
+% Plot residual data
+subplot(2,1,2); hold all;
+try plot(BARO.t,interp1(CTUN.t,CTUN.Alt,BARO.t)-BARO.Alt , 'DisplayName','Est. - BARO'); end
+try plot(GPS.t ,interp1(CTUN.t,CTUN.Alt ,GPS.t)-GPS.RAlt , 'DisplayName','Est. - GPS'); end
+try plot(EKF1.t,interp1(CTUN.t,CTUN.Alt,EKF1.t)+EKF1.PD  , 'DisplayName','Est. - EKF'); end
+try plot(CTUN.t,interp1(CTUN.t,CTUN.Alt,BARO.t)-CTUN.SAlt, 'DisplayName','Est. - SAlt'); end % Sonar altitude
+xlabel('Time [ s ]'); ylabel('Residual [ m ]');
+legend('-DynamicLegend');
+end
+%% Roll 
+if (plot_all || plot_ROLL);
+figure(gcf+1); clf; hold all; set(gcf,'name','Roll Comparison');
+% Plot input data
+subplot(2,1,1);  hold all;
 try plot(ATT.t,ATT.Roll, 'DisplayName','ATT'); end
 try plot(AHR2.t,AHR2.Roll, 'DisplayName','AHR2'); end
 try plot(EKF1.t,EKF1.Roll, 'DisplayName','EKF'); end
 xlabel('Time [ s ]'); ylabel('Roll [ deg ]');
 legend('-DynamicLegend');
-%% Pitch
-legend_string = {};
-figure(gcf+1); clf; hold all; set(gcf,'name','Pitch Estimates Comparison');
-try plot(ATT.t,ATT.Pitch); legend_string{end+1} = 'ATT'; end
-try plot(AHR2.t,AHR2.Pitch); legend_string{end+1} = 'AHR2'; end
-try plot(EKF1.t,EKF1.Pitch); legend_string{end+1} = 'EKF'; end
-xlabel('Time [ s ]'); ylabel('Pitch [ deg ]');
-legend(legend_string);
-%% Yaw
-legend_string = {};
-figure(gcf+1); clf; hold all; set(gcf,'name','Yaw Estimates Comparison');
-subplot(2,1,1); hold all; ...
-    try plot(ATT.t ,unwrap_360(ATT.Yaw) ); legend_string{end+1} = 'ATT'; end; ...
-    try plot(AHR2.t,unwrap_360(AHR2.Yaw)); legend_string{end+1} = 'AHR2'; end; ...
-    try plot(EKF1.t,unwrap_360(EKF1.Yaw)); legend_string{end+1} = 'EKF'; end; ...
-    legend(legend_string); ylabel('Yaw [ deg ]');
-subplot(2,1,2); hold all; ...
-    try plot(ATT.t,unwrap_360(ATT.Yaw)-interp1(AHR2.t,unwrap_360(AHR2.Yaw),ATT.t)); end; ...
-    try plot(ATT.t,unwrap_360(ATT.Yaw)-interp1(EKF1.t,unwrap_360(EKF1.Yaw),ATT.t)); end; ...
-    legend('ATT - AHR2','ATT - EKF1'); ylabel('Residual [ deg ]'); xlabel('Time [ s ]');
 
+% Plot residual data
+subplot(2,1,2); hold all;
+try plot(AHR2.t,interp1(ATT.t,ATT.Roll,AHR2.t)-AHR2.Roll, 'DisplayName','ATT - AHR2'); end
+try plot(EKF1.t,interp1(ATT.t,ATT.Roll,EKF1.t)-EKF1.Roll, 'DisplayName','ATT - EKF1'); end
+xlabel('Time [ s ]'); ylabel('Residual [ deg ]');
+legend('-DynamicLegend');
+end
+%% Pitch 
+if (plot_all || plot_PITCH);
+figure(gcf+1); clf; hold all; set(gcf,'name','Pitch Comparison');
+% Plot data
+subplot(2,1,1);  hold all;
+try plot(ATT.t,ATT.Pitch, 'DisplayName','ATT'); end
+try plot(AHR2.t,AHR2.Pitch, 'DisplayName','AHR2'); end
+try plot(EKF1.t,EKF1.Pitch, 'DisplayName','EKF'); end
+xlabel('Time [ s ]'); ylabel('Pitch [ deg ]');
+legend('-DynamicLegend');
+
+% Plot residual data
+subplot(2,1,2); hold all;
+try plot(AHR2.t,interp1(ATT.t,ATT.Pitch,AHR2.t)-AHR2.Pitch, 'DisplayName','ATT - AHR2'); end
+try plot(EKF1.t,interp1(ATT.t,ATT.Pitch,EKF1.t)-EKF1.Pitch, 'DisplayName','ATT - EKF1'); end
+xlabel('Time [ s ]'); ylabel('Residual [ deg ]');
+legend('-DynamicLegend');
+end
+%% Yaw 
+if (plot_all || plot_YAW);
+figure(gcf+1); clf; hold all; set(gcf,'name','Yaw Comparison');
+% Plot data
+subplot(2,1,1);  hold all;
+try plot(ATT.t,unwrap_360(ATT.Yaw), 'DisplayName','ATT'); end
+try plot(AHR2.t,unwrap_360(AHR2.Yaw), 'DisplayName','AHR2'); end
+try plot(EKF1.t,unwrap_360(EKF1.Yaw), 'DisplayName','EKF'); end
+xlabel('Time [ s ]'); ylabel('Yaw [ deg ]');
+legend('-DynamicLegend');
+
+% Plot residual data
+subplot(2,1,2); hold all;
+try plot(AHR2.t,interp1(ATT.t,unwrap_360(ATT.Yaw),AHR2.t)-unwrap_360(AHR2.Yaw), 'DisplayName','ATT - AHR2'); end
+try plot(EKF1.t,interp1(ATT.t,unwrap_360(ATT.Yaw),EKF1.t)-unwrap_360(EKF1.Yaw), 'DisplayName','ATT - EKF1'); end
+xlabel('Time [ s ]'); ylabel('Residual [ deg ]');
+legend('-DynamicLegend');
+end
 %% Accelerations
+if (plot_all || plot_ACC);
 figure(gcf+1); clf; hold all; set(gcf,'name','Acceleration Comparison'); % maybe
-subplot(3,1,1); hold all; title('Accelerations'); ...
+% Plot data
+subplot(3,2,1); hold all; title('Accelerations'); ...
     try plot(IMU2.t,IMU2.AccX, 'DisplayName','IMU2'); end; ...
     try plot(IMU.t,IMU.AccX, 'DisplayName','IMU'); end; ...
     ylabel('Acc\_X [ m/s^2 ]'); ...
     legend('-DynamicLegend','location','northEast');
-subplot(3,1,2); hold all; ...
+subplot(3,2,3); hold all; ...
     try plot(IMU2.t,IMU2.AccY); end; ...
     try plot(IMU.t,IMU.AccY); end; ...
     ylabel('Acc\_Y [ m/s^2 ]');
-subplot(3,1,3); hold all; ...
+subplot(3,2,5); hold all; ...
     try plot(IMU2.t,IMU2.AccZ); end; ...
     try plot(IMU.t,IMU.AccZ); end; ...
     ylabel('Acc\_Z [ m/s^2 ]');
-%% Rates
-figure(gcf+1); clf; hold all; set(gcf,'name','Rate Estimate Comparison'); % maybe
+
+% Plot residual data
+subplot(3,2,2); hold all; title('Accelerations'); ...
+    try plot(IMU2.t,interp1(IMU.t,IMU.AccX,IMU2.t)-IMU2.AccX, 'DisplayName','IMU - IMU2'); end; ...
+    ylabel('Acc\_X [ m/s^2 ]'); ...
+    legend('-DynamicLegend','location','northEast');
+subplot(3,2,4); hold all; ...
+    try plot(IMU2.t,interp1(IMU.t,IMU.AccY,IMU2.t)-IMU2.AccY, 'DisplayName','IMU - IMU2'); end; ...
+    ylabel('Acc\_Y [ m/s^2 ]');
+subplot(3,2,6); hold all; ...
+    try plot(IMU2.t,interp1(IMU.t,IMU.AccZ,IMU2.t)-IMU2.AccZ, 'DisplayName','IMU - IMU2'); end; ...
+    ylabel('Acc\_Z [ m/s^2 ]');
+end
+%% Rates 
+if (plot_all || plot_RATES);
+figure(gcf+1); clf; hold all; set(gcf,'name','Rate Estimate Comparison');
+% Plot data
 subplot(3,2,1); hold all; title('Rates'); ...
     try plot(RATE.t,RATE.R/100, 'DisplayName','RATE'); end; ...
     try plot(IMU.t,IMU.GyrX*180/pi, 'DisplayName','IMU'); end; ...
@@ -707,48 +796,41 @@ subplot(3,2,4); hold all; ...
 subplot(3,2,6); hold all; ...
     try plot(EKF1.t,EKF1.GZ*180/pi); end; ...
     ylabel('Rate.Y - GyrZ [ deg/s ]'); xlabel('Time [ s ]');
-%%
-try % Being lazy, need to fix
-    figure(gcf+1); clf; hold all; set(gcf,'name','Rate Residuals');
-    subplot(3,1,1); hold all; ...
-        plot(RATE.t,interp1(IMU.t,IMU.GyrX*180/pi,RATE.t)-RATE.R/100);...
-        plot(RATE.t,interp1(IMU2.t,IMU2.GyrX*180/pi,RATE.t)-RATE.R/100);...
-        ylabel('RateX\_(Measured - Estimate) [ deg/s ]'); legend('IMU','IMU2');
-    subplot(3,1,2); hold all; ...
-        plot(RATE.t,interp1(IMU.t,IMU.GyrY*180/pi,RATE.t)-RATE.P/100);...
-        plot(RATE.t,interp1(IMU2.t,IMU2.GyrY*180/pi,RATE.t)-RATE.P/100);...
-        ylabel('RateT\_(Measured - Estimate) [ deg/s ]');
-    subplot(3,1,3); hold all; ...
-        plot(RATE.t,interp1(IMU.t,IMU.GyrZ*180/pi,RATE.t)-RATE.Y/100);...
-        plot(RATE.t,interp1(IMU2.t,IMU2.GyrZ*180/pi,RATE.t)-RATE.Y/100);...
-        ylabel('RateZ\_(Measured - Estimate) [ deg/s ]'); xlabel('Time [ s ]');
-    
+end
+%% Magnetometers 
+if (plot_all || plot_MAGS);   
     %% Magnetometer Data
     figure(gcf+1); clf; hold all; set(gcf,'name','MAG Comparison Data');
     subplot(3,2,1); hold all;...
-        plot(MAG.t,MAG.MagX, 'DisplayName','MAG'); ...
-        plot(MAG2.t,MAG2.MagX, 'DisplayName','MAG2'); ...
+        try plot(MAG.t,MAG.MagX, 'DisplayName','MAG'); end; ...
+        try plot(MAG2.t,MAG2.MagX, 'DisplayName','MAG2');  end; ...
         ylabel('X'); legend('-DynamicLegend');
     subplot(3,2,3); hold all;...
-        plot(MAG.t,MAG.MagY); ...
-        plot(MAG2.t,MAG2.MagY); ...
+        try plot(MAG.t,MAG.MagY); end;...
+        try plot(MAG2.t,MAG2.MagY); end; ...
         ylabel('Y');
     subplot(3,2,5); hold all;...
-        plot(MAG.t,MAG.MagZ); ...
-        plot(MAG2.t,MAG2.MagZ); ...
+        try plot(MAG.t,MAG.MagZ); end; ...
+        try plot(MAG2.t,MAG2.MagZ); end; ...
         ylabel('Z'); xlabel('Time [ s ]');
     % Difference
     subplot(3,2,2); hold all;...
-        plot(MAG2.t,MAG2.MagX-interp1(MAG.t,MAG.MagX,MAG2.t), 'DisplayName','MAG2 - MAG'); ...
-        ylabel('X'); legend('-DynamicLegend'); % will add MAG3-MAG when I have 3 magnetometers
+        try plot(MAG2.t,interp1(MAG.t,MAG.MagX,MAG2.t)-MAG2.MagX, 'DisplayName','MAG - MAG2'); end; ...
+        try plot(MAG3.t,interp1(MAG.t,MAG.MagX,MAG3.t)-MAG3.MagX, 'DisplayName','MAG - MAG3'); end; ...
+        ylabel('X'); legend('-DynamicLegend');
     subplot(3,2,4); hold all;...
-        plot(MAG2.t,MAG2.MagY-interp1(MAG.t,MAG.MagY,MAG2.t)); ...
+        try plot(MAG2.t,interp1(MAG.t,MAG.MagY,MAG2.t)-MAG2.MagY); end; ...
+        try plot(MAG3.t,interp1(MAG.t,MAG.MagY,MAG3.t)-MAG3.MagY); end; ...
         ylabel('Y');
     subplot(3,2,6); hold all;...
-        plot(MAG2.t,MAG2.MagZ-interp1(MAG.t,MAG.MagZ,MAG2.t)); ...
+        try plot(MAG2.t,interp1(MAG.t,MAG.MagZ,MAG2.t)-MAG2.MagZ); end; ...
+        try plot(MAG3.t,interp1(MAG.t,MAG.MagZ,MAG3.t)-MAG3.MagZ); end; ...
         ylabel('Z'); xlabel('Time [ s ]');
 end
+
+
 %% ==== Set axes
+fprintf('\n');
 if ~exist('xlims','var'); xlims = 0; end;
 if length(xlims) == 2; fprintf('\nApplying x-axis limits\n'); end
 if grid_on; fprintf('Turning on grids\n'); end
@@ -797,6 +879,7 @@ close(1); % Closes figure 1 which gets created at the start
 return
 
 %% Visualisation of the flight
+% If the EKF is estimatin the position of the aircraft
 h = Aero.Animation;
 h.FramesPerSecond = 10;
 h.TimeScaling = 1;
@@ -806,13 +889,13 @@ idx2 = h.createBody('pa24-250_blue.ac','Ac3d');
 show_time = [340 380];
 locs = find(ATT.t>show_time(1) & ATT.t<show_time(2));
 
-fltdata.time = ATT.t(locs);
-fltdata.X = zeros(size(ATT.t(locs)));
-fltdata.Y = zeros(size(ATT.t(locs)));
-fltdata.Z = zeros(size(ATT.t(locs)));
-fltdata.phi = ATT.Roll(locs)/57.7;
-fltdata.theta = ATT.Pitch(locs)/57.7;
-fltdata.psi = ATT.Yaw(locs)/57.7;
+fltdata.time = EKF1.t(locs);
+fltdata.X = EKF1.PE(locs);
+fltdata.Y = EKF1.PN(locs);
+fltdata.Z = EKF1.PD(locs)*-1;
+fltdata.phi = EKF1.Roll(locs)/57.7;
+fltdata.theta = EKF1.Pitch(locs)/57.7;
+fltdata.psi = EKF1.Yaw(locs)/57.7;
 % load fltdata
 
 h.Bodies{1}.TimeseriesReadFcn = @CustomReadBodyTSData;

@@ -5,6 +5,11 @@ It would be really cool if someone could make a .exe or something of the code fr
 
 Matt Anderson 2015
 
+=======
+Usage
+- Use convert_bin_to_mat_APM.m to convert the .bin file from the APM/Pixhawk into a .mat file.  This will automatically clean the data up using clean_PX4_file as well.  Warning as the importing process is a bit slow.
+- Plot the data using plot_PX4_file
+
 ======
 plot_google_map function from Zohar Bar-Yehuda at http://www.mathworks.com/matlabcentral/fileexchange/27627-zoharby-plot-google-map
 
