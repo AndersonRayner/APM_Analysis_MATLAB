@@ -64,13 +64,13 @@ plot_RCIN = 0;
 plot_RCOU = 0;
 plot_VIBE = 1;
 % Comparison plots
-plot_ALT   = 1;
-plot_ROLL  = 1;
-plot_PITCH = 1;
-plot_YAW   = 1;
-plot_ACC   = 1;
-plot_RATES = 1;
-plot_MAGS  = 1;
+plot_ALT   = 0;
+plot_ROLL  = 0;
+plot_PITCH = 0;
+plot_YAW   = 0;
+plot_ACC   = 0;
+plot_RATES = 0;
+plot_MAGS  = 0;
 
 %% ==== RAW DATA
 %% AHR2 - DCM Attitude Estimate
