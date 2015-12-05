@@ -11,10 +11,10 @@ addpath('./functions/');
 
 % file = './data/1.mat';
 % file = './data/2.mat';
-% file = './data/3dr_aero.mat';
+file = './data/3dr_aero.mat';
 % file = './data/4.mat';
 % file = './data/5.mat';
-file = './data/6.mat';
+% file = './data/6.mat';
 % file = './data/7.mat';
 % file = './data/8.mat';
 % file = './data/27.mat';
@@ -23,7 +23,7 @@ file = './data/6.mat';
 % file = './data/lost_wing_flight.mat';
 % file = './data/marulan_quad_flight.mat';
 % file = './data/write_off_flight.mat';
-file = './data/3dr_aero.bin-315526-new.mat';
+% file = './data/3dr_aero.bin-315526-new.mat';
 
 % Need to convert GPS into an X,Y,Z for the playback later on
 
@@ -421,7 +421,7 @@ if exist('GPS','var') && (plot_all || plot_GPS);
     % Imports from MissionPlanner .mat files automatically fix the GPS
     % latitude and longitude.  Need to undo this.
     
-    if (abs(max(GPS.Lng))+abs(max(GPS.Lat)))>2
+    if (abs(max(GPS.Lng))+abs(max(GPS.Lat)))<1e7
         fprintf('File probably an import from MissionPlanner or no GPS data.  Fixing...\n');
         fprintf('Please note, messages will not show up correctly either\n');
         GPS.Lat = GPS.Lat*1e7;
