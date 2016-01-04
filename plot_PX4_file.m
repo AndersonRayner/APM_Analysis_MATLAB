@@ -168,8 +168,8 @@ if exist('CURR','var') && (plot_all || plot_CURR);
     subplot(3,2,1); hold all; ...
         try plot(CURR.t,CURR.Throttle); catch; plot(CURR.t,CURR.Thr); end; ...
         ylabel('Throttle [ % ]');
-    subplot(3,2,3); hold all; plot(CURR.t,CURR.Volt/100); ylabel('Volt [ V ]');
-    subplot(3,2,5); hold all; plot(CURR.t,CURR.Curr/100); ylabel('Curr [ A ]'); xlabel('Time [ s ]');
+    subplot(3,2,3); hold all; plot(CURR.t,CURR.Volt/100); ylabel('Battery Voltage [ V ]');
+    subplot(3,2,5); hold all; plot(CURR.t,CURR.Curr/100); ylabel('Supplied Current [ A ]'); xlabel('Time [ s ]');
     subplot(1,2,2); hold all; ...
         try    hAx = plotyy(CURR.t,CURR.Throttle,CURR.t,CURR.Curr.*CURR.Volt/1e4); ...
         catch; hAx = plotyy(CURR.t,CURR.Thr,CURR.t,CURR.Curr.*CURR.Volt/1e4); end; ...
@@ -195,6 +195,7 @@ if exist('DU32','var')
     
 end
 %% EKF1 - EKF Estimated States
+% from http://dev.ardupilot.com/wiki/extended-kalman-filter/#interpreting_log_data
 if exist('EKF1','var') && (plot_all || plot_EKF1);
     freq = calc_data_frequency(EKF1.t);
     figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Attitude - ',num2str(freq,'%.0f'),' Hz']);
@@ -205,11 +206,10 @@ if exist('EKF1','var') && (plot_all || plot_EKF1);
     subplot(3,1,3); hold all; ...
         plot(EKF1.t,EKF1.Yaw); ylabel('Yaw [ deg ]'); xlabel('Time [ s ]');
     
-    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Velocity - ',num2str(freq,'%.0f'),' Hz']); ...
-        plot(EKF1.t,EKF1.VN);  plot(EKF1.t,EKF1.VE); ...
-        plot(EKF1.t,sqrt(EKF1.VN.^2+EKF1.VE.^2));...
-        legend('V_{north}','V_{east}','V','location','best');...
-        xlabel('Time [ s ]'); ylabel('Velocity [ m/s ]');
+    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Ground Speed - ',num2str(freq,'%.0f'),' Hz']); ...
+        subplot(2,2,2); plot(EKF1.t,EKF1.VN); ylabel('V_{north}'); ...
+        subplot(2,2,4); plot(EKF1.t,EKF1.VE); ylabel('V_{east}'); xlabel('Time [ s ]');...
+        subplot(1,2,1); plot(EKF1.t,sqrt(EKF1.VN.^2+EKF1.VE.^2)); xlabel('Time [ s ]'); ylabel('Velocity [ m/s ]');
     
     figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Position - ',num2str(freq,'%.0f'),' Hz']);...
         subplot(1,2,1); hold all; plot(EKF1.PE,EKF1.PN); axis equal; xlabel('East [ m ]'); ylabel('North [ m ]');...
@@ -217,40 +217,63 @@ if exist('EKF1','var') && (plot_all || plot_EKF1);
         subplot(2,2,4); hold all; plot(EKF1.t,-EKF1.VD); ylabel('Climb Rate [ m/s ]'); xlabel('Time [ s ]'); ...
         figure(15); clf; hold all; set(gcf,'name',['EKF1 Rates - ',num2str(freq,'%.0f'),' Hz']);
     
-    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Rate - ',num2str(freq,'%.0f'),' Hz']); % maybe
+    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Gyro Bias - ',num2str(freq,'%.0f'),' Hz']); % maybe
     subplot(3,1,1); hold all; ...
-        plot(EKF1.t,EKF1.GX*180/pi);  ylabel('Roll Rate [ deg/s ]'); ...
+        plot(EKF1.t,EKF1.GX);  ylabel('Roll Rate Bias [ deg/min ]'); ...
         subplot(3,1,2); hold all; ...
-        plot(EKF1.t,EKF1.GY*180/pi); ylabel('Pitch Rate [ deg/s ]');
+        plot(EKF1.t,EKF1.GY); ylabel('Pitch Rate Bias [ deg/min ]');
     subplot(3,1,3); hold all; ...
-        plot(EKF1.t,EKF1.GZ*180/pi); ylabel('Yaw Rate [ deg/s ]'); xlabel('Time [ s ]');
+        plot(EKF1.t,EKF1.GZ); ylabel('Yaw Rate Bias [ deg/mins ]'); xlabel('Time [ s ]');
 end
-%% EKF2 -
+%% EKF2 - EKF Biases
 %     int8_t Ratio;  What is this?
 if exist('EKF2','var') && (plot_all || plot_EKF2)
     freq = calc_data_frequency(EKF2.t);
-    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Bias - ',num2str(freq,'%.0f'),' Hz']);
-    try plot(EKF2.t,EKF2.AZ1bias); plot(EKF2.t,EKF2.AZ2bias); legend('AZ1','AZ2'); end % Fails on older logs
+    % Ratio of IMU1 and IMU data blending
+    try; figure(gcf+1); clf; hold all; set(gcf,'name',['IMU Blending - ',num2str(freq,'%.0f'),' Hz']);
+    plot(EKF2.t,EKF2.Ratio);...
+        xlabel('Time [ s ]'); ylabel('IMU1/IMU2 Blending Ratio [ % ]'); end
+    % Accelerometer biases
+    try; figure(gcf+1); clf; hold all; set(gcf,'name',['EKF Bias - ',num2str(freq,'%.0f'),' Hz']);
+    plot(EKF2.t,EKF2.AZ1bias); plot(EKF2.t,EKF2.AZ2bias);...
+        ylabel('Z Accelerometer Bias [ cm/s^2 ]'); xlabel('Time [ s ]'); legend('IMU1','IMU2'); end % Fails on older logs
+    % Wind estimate
+    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF Wind Estimate - ',num2str(freq,'%.0f'),' Hz']);
+    % Wind speed
+    subplot(2,1,1); hold all; plot(EKF2.t,sqrt(EKF2.VWN.^2+EKF2.VWE.^2));...
+        xlabel('Time [ s ]'); ylabel('Wind Velocity [ m/s ]');
+    subplot(2,1,2); hold all; plot(EKF2.t,atan(EKF2.VWE./EKF2.VWN)*180/pi);...
+        xlabel('Time [ s ]'); ylabel('Wind Direction [ deg ]');
     
-    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Wind Estimate - ',num2str(freq,'%.0f'),' Hz']);
-    plot(EKF2.t,EKF2.VWN); plot(EKF2.t,EKF2.VWE);
-    
-    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF1 Magnetometer - ',num2str(freq,'%.0f'),' Hz']);
-    subplot(3,2,1); plot(EKF2.t,EKF2.MN); ylabel('MagN');
-    subplot(3,2,3); plot(EKF2.t,EKF2.ME); ylabel('MagE');
-    subplot(3,2,5); plot(EKF2.t,EKF2.MD); ylabel('MagD'); xlabel('Time [ s ]');
-    subplot(3,2,2); plot(EKF2.t,EKF2.MX); ylabel('MagX');
-    subplot(3,2,4); plot(EKF2.t,EKF2.MY); ylabel('MagY');
-    subplot(3,2,6); plot(EKF2.t,EKF2.MZ); ylabel('MagZ'); xlabel('Time [ s ]');
+    figure(gcf+1); clf; hold all; set(gcf,'name',['EKF Magnetometer - ',num2str(freq,'%.0f'),' Hz']);
+    subplot(2,1,1); hold all;...
+        plot(EKF2.t,EKF2.MN);...
+        plot(EKF2.t,EKF2.ME);...
+        plot(EKF2.t,EKF2.MD);...
+        legend('North','East','Down');
+        ylabel('Magnetic Field Strength [ sensor units ]');
+    subplot(2,1,2); hold all;...
+         plot(EKF2.t,EKF2.MX);...
+         plot(EKF2.t,EKF2.MY);...
+         plot(EKF2.t,EKF2.MZ); ...
+         legend('X','Y','Z');
+         ylabel('Magnetometer Bias [ ? ]'); xlabel('Time [ s ]');
 end
-%% EKF3 -
+%% EKF3 - EKF Innovations
 if exist('EKF3','var') && (plot_all || plot_EKF3);
     freq = calc_data_frequency(EKF3.t);
-    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF3 Innovation - ',num2str(freq,'%.0f'),' Hz']);
-    subplot(4,1,1); hold all; plot(EKF3.t,EKF3.IVN); plot(EKF3.t,EKF3.IVE); plot(EKF3.t,EKF3.IVD); legend('innovVN','innovVE','innovVD');
-    subplot(4,1,2); hold all; plot(EKF3.t,EKF3.IPN); plot(EKF3.t,EKF3.IPE); plot(EKF3.t,EKF3.IPD); legend('innovPN','innovPE','innovPD');
-    subplot(4,1,3); hold all; plot(EKF3.t,EKF3.IMZ); plot(EKF3.t,EKF3.IMY); plot(EKF3.t,EKF3.IMZ); legend('innovMX','innovMY','innovMZ');
-    subplot(4,1,4); hold all; plot(EKF3.t,EKF3.IVT); legend('innovVT');
+    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF GPS Innovations - ',num2str(freq,'%.0f'),' Hz']);
+        subplot(2,1,1); hold all; plot(EKF3.t,EKF3.IVN); plot(EKF3.t,EKF3.IVE); plot(EKF3.t,EKF3.IVD); ...
+            legend('V_{North}','V_{East}','V_{Down}'); ylabel('Velocity [ m/s ]');
+        subplot(2,1,2); hold all; plot(EKF3.t,EKF3.IPN); plot(EKF3.t,EKF3.IPE); plot(EKF3.t,EKF3.IPD);...
+            legend('P_{North}','P_{East}','P_{Down}'); ylabel('Position [ m ]');
+    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF Barometer Innovations - ',num2str(freq,'%.0f'),' Hz']);
+        plot(EKF3.t,EKF3.IPD); ylabel('Height Innovations [ m ]');
+    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF Magnetometer Innovations - ',num2str(freq,'%.0f'),' Hz']);   
+        plot(EKF3.t,EKF3.IMX); plot(EKF3.t,EKF3.IMY); plot(EKF3.t,EKF3.IMZ);...
+            legend('M_X','M_Y','M_Z'); ylabel('Magnetometer Innovations');
+    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF Airspeed Innovations - ',num2str(freq,'%.0f'),' Hz']);  
+        plot(EKF3.t,EKF3.IVT); ylabel('Airspeed Innovation [ m/s ]'); xlabel('Time [ s ]');
     
     %   uint64_t time_us;
     %     int16_t innovVN;
@@ -264,19 +287,34 @@ if exist('EKF3','var') && (plot_all || plot_EKF3);
     %     int16_t innovMZ;
     %     int16_t innovVT;
 end
-%% EKF4 -
+%% EKF4 - Sensor Consistency Measuremenets
 if exist('EKF4','var') && (plot_all || plot_EKF4);
     freq = calc_data_frequency(EKF4.t);
-    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF4 Variance - ',num2str(freq,'%.0f'),' Hz']);
-    subplot(4,2,1); hold all; plot(EKF4.t,EKF4.SV); plot(EKF4.t,EKF4.SP);legend('sqrtvarV','sqrtvarP','location','northWest');
-    subplot(4,2,3); hold all; plot(EKF4.t,EKF4.SH); legend('sqrtvarH','location','northWest')
-    subplot(4,2,2); hold all; plot(EKF4.t,EKF4.SMX); plot(EKF4.t,EKF4.SMY); plot(EKF4.t,EKF4.SMZ); legend('sqrtvarMX','sqrtvarMY','sqrtvarMZ','location','northWest');
-    try subplot(4,2,5); hold all; plot(EKF4.t,EKF4.OFN); plot(EKF4.t,EKF4.OFE); legend('offsetNorth','offsetEast','location','northWest');
-    catch;subplot(4,2,5); hold all; plot(EKF4.t,EKF4.OFN); plot(EKF4.t,EKF4.EFE); legend('offsetNorth','offsetEast','location','northWest'); end
-    subplot(4,2,7); hold all; plot(EKF4.t,EKF4.SVT); legend('sqrtvarVT','location','northWest');
-    subplot(4,2,4); hold all; plot(EKF4.t,EKF4.FS); legend('faults','location','northWest');
-    try subplot(4,2,6); hold all; plot(EKF4.t,EKF4.TS); legend('timeouts','location','northWest'); end; % Fails on older logs
-    try subplot(4,2,8); hold all; plot(EKF4.t,EKF4.SS); legend('solution','location','northWest'); end; % Fails on older logs
+    figure(gcf+1);clf; hold all; set(gcf,'name',['EKF Sensor Consistency - ',num2str(freq,'%.0f'),' Hz']);
+
+    
+    subplot(4,2,1); plot(EKF4.t,EKF4.SV); ylabel('GPS Velocity');
+    subplot(4,2,2); plot(EKF4.t,EKF4.SP); ylabel('GPS Position');
+    subplot(4,2,3); plot(EKF4.t,EKF4.SH); ylabel('Barometer Height');
+    subplot(4,2,4); hold all; ylabel('Magnetometer'); ...
+        plot(EKF4.t,EKF4.SMX); plot(EKF4.t,EKF4.SMY); plot(EKF4.t,EKF4.SMZ); legend('M_X','M_Y','M_Z','location','northWest');
+    subplot(4,2,5); plot(EKF4.t,EKF4.SVT); ylabel('Airspeed');
+    % Add allowable lines
+    for ii = 1:5;
+        xlims = xlim;
+        subplot(4,2,ii); hold all; ...
+            plot(xlims,[0.5 0.5],':y');...
+            plot(xlims,[1.0 1.0],':r');
+    end
+
+%     subplot(4,2,2); hold all; 
+%     try subplot(4,2,5); hold all; plot(EKF4.t,EKF4.OFN); plot(EKF4.t,EKF4.OFE); legend('offsetNorth','offsetEast','location','northWest');
+%     catch;subplot(4,2,5); hold all; plot(EKF4.t,EKF4.OFN); plot(EKF4.t,EKF4.EFE); legend('offsetNorth','offsetEast','location','northWest'); end
+%     subplot(4,2,7); hold all;  legend('sqrtvarVT','location','northWest');
+%     subplot(4,2,4); hold all; plot(EKF4.t,EKF4.FS); legend('faults','location','northWest');
+%     try subplot(4,2,6); hold all; plot(EKF4.t,EKF4.TS); legend('timeouts','location','northWest'); end; % Fails on older logs
+%     try subplot(4,2,8); hold all; plot(EKF4.t,EKF4.SS); legend('solution','location','northWest'); end; % Fails on older logs
+
     %   uint64_t time_us;   TimeUS
     %     int16_t sqrtvarV; SV
     %     int16_t sqrtvarP; SP
