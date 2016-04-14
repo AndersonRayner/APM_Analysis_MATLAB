@@ -11,7 +11,7 @@ addpath('./functions/');
 
 % file = './data/1.mat';
 % file = './data/2.mat';
-file = './data/3dr_aero.mat';
+% file = './data/3dr_aero.mat';
 % file = './data/4.mat';
 % file = './data/5.mat';
 % file = './data/6.mat';
@@ -24,14 +24,17 @@ file = './data/3dr_aero.mat';
 % file = './data/marulan_quad_flight.mat';
 % file = './data/write_off_flight.mat';
 % file = './data/3dr_aero.bin-315526-new.mat';
+% file = './data/kai.mat';
+file = './data/IRIS_2.mat';
+% file = './data/quad_1.mat';  % Latest quad flight
 
 % Need to convert GPS into an X,Y,Z for the playback later on
 
 load(file)
 
 %% Settings
-% xlims = [200 640]; % Sets the axis limits when the x-axis is time. Setting to 0 or commenting disables the feature.
-plot_all = 0;
+xlims = [107 218]; % Sets the axis limits when the x-axis is time. Setting to 0 or commenting disables the feature.
+plot_all = 1;
 grid_on = 1;
 % plot_locs_at_time = [ 942 984 1125 1274 ]; % Plots a marker on the GPS plot at the listed times.  Commenting disables the feature.
 

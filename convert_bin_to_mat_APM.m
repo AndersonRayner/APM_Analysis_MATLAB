@@ -13,7 +13,7 @@ if ~nargin
     
 %     file = './data/1.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/2.BIN'; convert_bin_to_mat_APM(file);
-    file = './data/3dr_aero.bin'; convert_bin_to_mat_APM(file);
+%     file = './data/3dr_aero.bin'; convert_bin_to_mat_APM(file);
 %     file = './data/4.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/5.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/6.BIN'; convert_bin_to_mat_APM(file);
@@ -25,6 +25,11 @@ if ~nargin
 %     file = './data/lost_wing_flight.bin'; convert_bin_to_mat_APM(file);
 %     file = './data/marulan_quad_flight.BIN'; convert_bin_to_mat_APM(file);
 %     file = './data/write_off_flight.bin'; convert_bin_to_mat_APM(file);
+%  file = './data/kai.bin'; convert_bin_to_mat_APM(file);
+% file = './data/IRIS_1.bin'; convert_bin_to_mat_APM(file);
+% file = './data/IRIS_2.bin'; convert_bin_to_mat_APM(file);
+% file = './data/IRIS_3.bin'; convert_bin_to_mat_APM(file);
+file = './data/17.bin'; convert_bin_to_mat_APM(file);
     
     return
 end
@@ -149,7 +154,8 @@ while (ftell(fid)+50)<(length_of_file)  % ~feof(fid) - goes to 50 from the end i
                         switch formats(ii)
                             % Format characters in the format string for binary log messages
                             % Data from
-                            % ardupilot/libraries/DataFlash/DataFlash.h - Line 738
+                            % ardupilot/libraries/DataFlash/LogStructure.h
+                            % - Line 670
                             %   b   : int8_t
                             case 'b'
                                 data = num2str(fread(fid,1,'int8')); if isempty(data); data = nan; end;
