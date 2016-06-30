@@ -25,13 +25,15 @@ for ii = 1:length(list_of_variables)
     try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''ID'');']); end
     try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''size'');']); end
     try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''format'');']); end
-    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''LineNo'');']); end   
+    try eval([list_of_variables{ii} ' = rmfield(',list_of_variables{ii},',''LineNo'');']); end
 end
 
 %% Create a time vector in seconds
 for ii = 1:length(list_of_variables)
     eval(['if isfield(',list_of_variables{ii},',''TimeUS''); ',list_of_variables{ii},'.t = ',list_of_variables{ii},'.TimeUS/1e6; end;']); % For when time is in us
     eval(['if isfield(',list_of_variables{ii},',''TimeMS''); ',list_of_variables{ii},'.t = ',list_of_variables{ii},'.TimeMS/1e3; end;']); % for when time is in ms
+    % Print freqency of data
+    try; eval(['fprintf(''\tDetected %4s at %3.0f Hz\n'',''',list_of_variables{ii},''',calc_data_frequency(',list_of_variables{ii},'.t));']); end
 end
 
 %% Remove 0 Lat and Lng fields (set to NaN)
@@ -40,9 +42,22 @@ for ii = 1:length(list_of_variables)
     eval(['if isfield(',list_of_variables{ii},',''Lng''); ',list_of_variables{ii},'.Lng(',list_of_variables{ii},'.Lng == 0) = nan; end;']);
 end
 
-%% Remove high (>5) HDOP Lat and Lng fields (set to NaN)
+%% Remove high (>20) HDOP Lat and Lng fields (set to NaN)
 % undecided if a good idea
+for ii = 1:length(list_of_variables)
+    eval(['if isfield(',list_of_variables{ii},',''HDop''); ',list_of_variables{ii},'.Lat(',list_of_variables{ii},'.HDop > 20) = nan; end;']);
+    eval(['if isfield(',list_of_variables{ii},',''HDop''); ',list_of_variables{ii},'.Lng(',list_of_variables{ii},'.HDop > 20) = nan; end;']);
+end
 
+%% Clean up the RPM data
+for ii = 1:length(list_of_variables)
+    temp = list_of_variables{ii};
+    eval(['if isfield(',temp,',''rpm1''); ',temp,'.rpm1 = clean_rpm(',temp,'.t,',temp,'.rpm1); end;']);
+    eval(['if isfield(',temp,',''rpm2''); ',temp,'.rpm2 = clean_rpm(',temp,'.t,',temp,'.rpm2); end;']);
+    eval(['if isfield(',temp,',''rpm3''); ',temp,'.rpm3 = clean_rpm(',temp,'.t,',temp,'.rpm3); end;']);
+    eval(['if isfield(',temp,',''rpm4''); ',temp,'.rpm4 = clean_rpm(',temp,'.t,',temp,'.rpm4); end;']);
+end
+% keyboard
 %% Save the file
 % Save data
 save_list = [];
@@ -66,3 +81,20 @@ end
 eval(['save(''',PX4_file,''',',save_list(1:end-1),');']);
 fprintf('Done!\n')
 return
+end
+
+function rpm = clean_rpm(t,rpm)
+% Cleans the RPM data up
+
+slope_limit = 50000;
+slope = nan(size(rpm));
+
+for ii = 5:length(t)-5
+    slope(ii) = (rpm(ii)-rpm(ii-1))/(t(ii)-t(ii-1));
+    if abs(slope(ii))>slope_limit
+        rpm(ii) = (rpm(ii+1)+rpm(ii-1))/2;
+    end
+end
+
+return
+end

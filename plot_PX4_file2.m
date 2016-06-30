@@ -3,62 +3,91 @@
 % Works from about APM:Plane V3.1.1 and APM:Copter V3.2
 %
 % Fields can be retrieved from DataFlash.h.  Search for log_XXX
-close all
+% close all
 clear all
 clc
 
 addpath('./functions/');
 
-file = './data/first_flight.mat';
-
-% Need to convert GPS into an X,Y,Z for the playback later on
-
+file = 'D:\SkyDrive\recent_flights\36.BIN.mat';
+% clean_PX4_file(file)
 load(file)
 
 %% Settings
-% xlims = [107 218]; % Sets the axis limits when the x-axis is time. Setting to 0 or commenting disables the feature.
-plot_all = 1;
-grid_on = 1;
-% plot_locs_at_time = [ 942 984 1125 1274 ]; % Plots a marker on the GPS plot at the listed times.  Commenting disables the feature.
+% xlims = [150 165]; % Sets the axis limits when the x-axis is time. Setting to 0 or commenting the feature.
+grid_on = 0;
+
+%% Back-calculate control inputs
+M_quad = [ ...
+    1  1/sqrt(2) -1/sqrt(2) -1
+    1 -1/sqrt(2)  1/sqrt(2) -1
+    1  1/sqrt(2)  1/sqrt(2)  1
+    1 -1/sqrt(2) -1/sqrt(2)  1 ];
+U = M_quad\[ RCOU.Ch1 RCOU.Ch2 RCOU.Ch3 RCOU.Ch4 ]';
+
+dt = (U(1,:)'-min(RCOU.Ch1))/800;
+de =  U(2,:)'/400;
+da =  U(3,:)'/400;
+dr =  U(4,:)'/400;
+
+%% Attitude Data
+figure(1); clf; hold all;
+freq = calc_data_frequency(AHR2.t); set(gcf,'name',['Attitude Estimate Overview - ',num2str(freq,'%.0f'),' Hz']);
+subplot(3,1,1); hold all; ylabel('Roll [ deg ]'); ...
+    plot(NKF1.t,NKF1.Roll); plot(NKF6.t,NKF6.Roll); ...
+    legend('NKF1','NKF2');
+subplot(3,1,2); hold all; ylabel('Pitch [ deg ]'); ...
+    plot(NKF1.t,NKF1.Pitch); plot(NKF6.t,NKF6.Pitch); 
+subplot(3,1,3); hold all;  ylabel('Yaw [ deg ]'); xlabel('Time [ s ]'); ...
+    plot(NKF1.t,unwrap_360(NKF1.Yaw)); plot(NKF6.t,unwrap_360(NKF6.Yaw));
+
+% subplot(3,2,2); hold all; ylabel('Diff [ deg ]');...
+%     plot(NKF1.t,NKF6.Roll-NKF1.Roll(1:length(NKF6.Roll))); 
+% subplot(3,2,4); hold all; ylabel('Difference [ deg ]'); ...
+%     plot(NKF1.t,NKF6.Pitch-NKF1.Pitch(1:length(NKF6.Pitch))); 
+% subplot(3,2,6); hold all;  ylabel('Difference [ deg ]'); xlabel('Time [ s ]'); ...
+%     plot(NKF1.t,unwrap_360(NKF6.Yaw)-unwrap_360(NKF1.Yaw(1:length(NKF6.Yaw))));
+
+%% Control
+figure(2); clf; hold all;
+freq = calc_data_frequency(ATT.t); set(gcf,'name',['Control Overview - ',num2str(freq,'%.0f'),' Hz']);
+subplot(3,2,1); hold all; ylabel('Roll [ deg ]');...
+    plot(ATT.t,ATT.DesRoll); plot(ATT.t,ATT.Roll); ...
+    legend('Desired','Actual');
+subplot(3,2,3); hold all; ylabel('Pitch [ deg ]'); ...
+    plot(ATT.t,ATT.DesPitch); plot(ATT.t,ATT.Pitch);
+subplot(3,2,5); hold all; ylabel('Yaw [ deg ]'); xlabel('Time [ s ]'); ...
+    plot(ATT.t,unwrap_360(ATT.DesYaw)-360); plot(ATT.t,unwrap_360(ATT.Yaw)); 
+
+figure(3); clf; hold all; 
+freq = calc_data_frequency(WING.t); set(gcf,'name',['RPM and RCOU Overview - ',num2str(freq,'%.0f'),' Hz']);
+subplot(2,2,1); hold all; ylabel('rpm1 [ - ]');...
+    plotyy(WING.t,WING.rpm1,RCOU.t,RCOU.Ch1); 
+subplot(2,2,2); hold all; ylabel('rpm2 [ - ]');...
+    plotyy(WING.t,WING.rpm2,RCOU.t,RCOU.Ch2); 
+subplot(2,2,3); hold all; ylabel('rpm3 [ - ]');...
+    plotyy(WING.t,WING.rpm3,RCOU.t,RCOU.Ch3); 
+subplot(2,2,4); hold all; ylabel('rpm4 [ - ]');...
+    plotyy(WING.t,WING.rpm4,RCOU.t,RCOU.Ch4); 
+
+figure(4); clf; hold all;
+freq = calc_data_frequency(RCOU.t); set(gcf,'name',['Control Inputs Overview - ',num2str(freq,'%.0f'),' Hz']);
+subplot(2,2,1); plot(RCOU.t,dt); ylabel('\delta_t');
+subplot(2,2,2); plot(RCOU.t,de); ylabel('\delta_e');
+subplot(2,2,3); plot(RCOU.t,da); ylabel('\delta_a');
+subplot(2,2,4); plot(RCOU.t,dr); ylabel('\delta_r');
+
+%% Test plot
+figure(5); clf; hold all;
+plot(RCOU.Ch1,interp1(WING.t,WING.rpm1,RCOU.t),'x');
+%% Fix the plots
+if ~exist('xlims','var'); xlims = 0; end;
+format_all_plots(xlims,0)
+return
 
 
 
-%% Turn individual plots on or off
-plot_AHR2 = 0;
-plot_ARSP = 0;
-plot_ATT  = 0;
-plot_BARO = 0;
-plot_CTUN = 0;
-plot_CURR = 0;
-plot_EKF1 = 0;
-plot_EKF2 = 0;
-plot_EKF3 = 0;
-plot_EKF4 = 0;
-plot_GPA  = 0;
-plot_GPS  = 0;
-plot_IMU  = 0;
-plot_IMU2 = 0;
-plot_MAG  = 0;
-plot_MAG2 = 0;
-plot_NTUN = 0;
-plot_PM   = 0;
-plot_POS  = 0;
-plot_POWR = 0;
-plot_RAD  = 0;
-plot_RATE = 0;
-plot_RCIN = 0;
-plot_RCOU = 0;
-plot_VIBE = 0;
-% Comparison plots
-plot_ALT   = 0;
-plot_ROLL  = 0;
-plot_PITCH = 0;
-plot_YAW   = 0;
-plot_ACC   = 0;
-plot_RATES = 0;
-plot_MAGS  = 0;
-
-%% ==== RAW DATA
+keyboard
 %% AHR2 - DCM Attitude Estimate
 if exist('AHR2','var') && (plot_all || plot_AHR2);
     freq = calc_data_frequency(AHR2.t);

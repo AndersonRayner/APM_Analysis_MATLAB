@@ -11,26 +11,30 @@ if ~nargin
     clear all
     clc
     
-%     file = './data/1.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/2.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/3dr_aero.bin'; convert_bin_to_mat_APM(file);
-%     file = './data/4.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/5.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/6.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/7.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/8.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/27.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/airspeed_test.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/bwb_flight.bin'; convert_bin_to_mat_APM(file);
-%     file = './data/lost_wing_flight.bin'; convert_bin_to_mat_APM(file);
-%     file = './data/marulan_quad_flight.BIN'; convert_bin_to_mat_APM(file);
-%     file = './data/write_off_flight.bin'; convert_bin_to_mat_APM(file);
-%  file = './data/kai.bin'; convert_bin_to_mat_APM(file);
-% file = './data/IRIS_1.bin'; convert_bin_to_mat_APM(file);
-% file = './data/IRIS_2.bin'; convert_bin_to_mat_APM(file);
-% file = './data/IRIS_3.bin'; convert_bin_to_mat_APM(file);
-file = './data/17.bin'; convert_bin_to_mat_APM(file);
+    % Get a list of files
+    data_path = './data/';
+    files = dir(data_path);
     
+    % Loop through each file
+    for ii = 3:length(files)
+        % Check to see if it's a bin file
+        if strcmp(files(ii).name(end-2:end),'bin') || ...
+                strcmp(files(ii).name(end-2:end),'BIN')
+            fprintf('bin file detected %25s',files(ii).name)
+            
+            % Check to see if a mat file exists for it
+            if exist([data_path,files(ii).name(1:end-4),'.mat'],'file')
+                % Already exists - skip it
+                fprintf('...finished!\n')
+            else
+                % Convert
+                fprintf('...converting\n');
+                convert_bin_to_mat_APM([data_path,files(ii).name]);
+            end
+        end
+    end
+    
+    fprintf('\n\nAll files converted!\n\n');
     return
 end
 
@@ -115,7 +119,7 @@ while (ftell(fid)+50)<(length_of_file)  % ~feof(fid) - goes to 50 from the end i
                     list_of_ids(end+1,1) = ID;
                     used_ID(end+1,1) = 0;
                     list_of_names{end+1,1} = nam;
-                 %   fprintf('Added a new data type!\n');
+                    %   fprintf('Added a new data type!\n');
                     
                 else
                     fprintf('Already know file type - ignoring\n');
@@ -280,7 +284,7 @@ while (ftell(fid)+50)<(length_of_file)  % ~feof(fid) - goes to 50 from the end i
                         progress_multiplier = progress_multiplier + 0.01;
                     end
                 end
-%                 fprintf('Data block ending %8d of %8d read\n',ftell(fid),length_of_file);
+                %                 fprintf('Data block ending %8d of %8d read\n',ftell(fid),length_of_file);
         end
         
     elseif feof(fid)
@@ -304,7 +308,7 @@ while (ftell(fid)+50)<(length_of_file)  % ~feof(fid) - goes to 50 from the end i
                 start_found = 1;
             end
         end
-                fprintf('Found my spot!');
+        fprintf('Found my spot!');
     end
     
 end
